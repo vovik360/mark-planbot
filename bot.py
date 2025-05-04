@@ -1,40 +1,33 @@
-import logging
-import os
 import openai
+import os
 from telegram import Update
-from telegram.ext import ApplicationBuilder, ContextTypes, MessageHandler, filters
+from telegram.ext import Application, CommandHandler, MessageHandler, filters
 
-# Настройки логов
-logging.basicConfig(level=logging.INFO)
+# Получаем токен Telegram бота из переменной окружения
+TELEGRAM_API_KEY = os.getenv("TELEGRAM_API_KEY")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
-# API-ключи
-TELEGRAM_TOKEN = "8014948500:AAEnxkOjDNenrZ-8NViSaCYt1U2sD1yPRDU"
-openai.api_key = "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"
+openai.api_key = OPENAI_API_KEY
 
-# Асинхронная функция общения с OpenAI
-async def ask_openai(prompt):
-    try:
-        response = openai.ChatCompletion.create(
-            model="gpt-4",
-            messages=[
-                {"role": "system", "content": "Ты бот-планировщик по имени Марк. Пиши коротко, по-человечески, дружелюбно и с ответственностью. Запоминай, что тебе говорит Вова, и формируй из этого задачи и напоминания."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.7,
-            max_tokens=150
-        )
-        return response.choices[0].message['content'].strip()
-    except Exception as e:
-        return f"Ошибка OpenAI: {e}"
+async def start(update: Update, context):
+    await update.message.reply_text("Привет! Я готов работать.")
 
-# Главный обработчик сообщений
-async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_input = update.message.text
-    reply = await ask_openai(user_input)
-    await update.message.reply_text(reply)
+async def handle_message(update: Update, context):
+    user_message = update.message.text
+    response = openai.Completion.create(
+        model="text-davinci-003",  # Можно поменять модель в зависимости от нужд
+        prompt=user_message,
+        max_tokens=150
+    )
+    await update.message.reply_text(response.choices[0].text.strip())
 
-# Запуск бота
-if __name__ == '__main__':
-    app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
-    app.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), handle_message))
-    app.run_polling()
+def main():
+    application = Application.builder().token(TELEGRAM_API_KEY).build()
+
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+
+    application.run_polling()
+
+if __name__ == "__main__":
+    main()

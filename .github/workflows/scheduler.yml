@@ -1,0 +1,27 @@
+name: Scheduler for reminders
+
+on:
+  schedule:
+    - cron: '*/1 * * * *'  # Каждую минуту, ты можешь изменить интервал
+
+jobs:
+  reminder-job:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.9'  # Можно выбрать версию Python, которую ты используешь
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt  # Устанавливаем зависимости
+
+      - name: Run scheduler
+        run: |
+          python scheduler.py  # Запускаем задачу, которая будет проверять напоминания

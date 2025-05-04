@@ -1,33 +1,20 @@
-import openai
-import os
 from telegram import Update
-from telegram.ext import Application, CommandHandler, MessageHandler, filters
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
-# Получаем токен Telegram бота из переменной окружения
-TELEGRAM_API_KEY = os.getenv("TELEGRAM_API_KEY")
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+import os
 
-openai.api_key = OPENAI_API_KEY
+TOKEN = os.getenv("TELEGRAM_TOKEN")
 
-async def start(update: Update, context):
-    await update.message.reply_text("Привет! Я готов работать.")
+# Обработчик стартовой команды
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    await update.message.reply_text("Hello! I'm your bot.")
 
-async def handle_message(update: Update, context):
-    user_message = update.message.text
-    response = openai.Completion.create(
-        model="text-davinci-003",  # Можно поменять модель в зависимости от нужд
-        prompt=user_message,
-        max_tokens=150
-    )
-    await update.message.reply_text(response.choices[0].text.strip())
+# Запуск приложения
+application = ApplicationBuilder().token(TOKEN).build()
 
-def main():
-    application = Application.builder().token(TELEGRAM_API_KEY).build()
+# Регистрируем обработчики
+application.add_handler(CommandHandler("start", start))
 
-    application.add_handler(CommandHandler("start", start))
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-
+# Запускаем бота
+if __name__ == '__main__':
     application.run_polling()
-
-if __name__ == "__main__":
-    main()
